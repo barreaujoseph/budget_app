@@ -1,0 +1,22 @@
+# Environnement virtuel
+venv/
+.venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# Fichiers de données sensibles
+*.csv
+*.xlsx
+*.db
+*.ipynb
+
+# Variables d'environnement
+.env
+
+# Streamlit fichiers locaux
+.streamlit/
+
+# Autres fichiers temporaires
+.DS_Store
