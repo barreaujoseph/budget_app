@@ -2,18 +2,22 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from db import engine
 
 st.session_state.sidebar_closed = True
 st.set_page_config(initial_sidebar_state="collapsed", layout="wide")
 
 
 # Connexion DB
-conn = sqlite3.connect("budget.db")
+df = pd.read_sql("SELECT * FROM operations", engine)
 
 st.title("📊 Suivi de budget")
 
 # Charger depuis SQLite
-df = pd.read_sql_query("SELECT * FROM operations", conn)
+
 # 🔥 Analyse des dépenses
 
 import altair as alt
@@ -177,7 +181,7 @@ df_top = (
 
 st.dataframe(df_top)
 
-
+from sqlalchemy import text
 
 st.subheader("🟡 Catégoriser les opérations non classées")
 
@@ -224,12 +228,15 @@ else:
         submit = st.form_submit_button("✅ Enregistrer les changements")
 
         if submit:
-            for idx, cat in new_cats.items():
-                conn.execute(
-                    "UPDATE operations SET Categorie = ? WHERE [index] = ?",
-                    (cat, idx)
-                )
-            conn.commit()
-            st.success("✅ Catégories mises à jour !")
-            st.rerun()
+            with engine.connect() as connection:
+                for idx, cat in new_cats.items():
+                    query = text("""
+                        UPDATE operations
+                        SET "Categorie" = :cat
+                        WHERE "index" = :idx
+                    """)
+                    connection.execute(query, {"cat": cat, "idx": idx})
+                connection.commit()
 
+            st.success("✅ Catégories mises à jour dans PostgreSQL !")
+            st.rerun()

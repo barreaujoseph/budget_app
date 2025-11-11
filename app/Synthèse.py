@@ -1,6 +1,10 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from db import engine
 
 st.set_page_config(
     page_title="Budget App",
@@ -11,9 +15,7 @@ st.set_page_config(
 
 st.title("📊 Dashboard — Synthèse")
 
-conn = sqlite3.connect("budget.db")
-df = pd.read_sql_query("SELECT * FROM operations", conn)
-
+df = pd.read_sql("SELECT * FROM operations", engine)
 
 # S'assurer que Date est bien un datetime
 df["Date"] = pd.to_datetime(df["Date"])

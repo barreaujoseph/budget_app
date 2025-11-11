@@ -3,6 +3,10 @@ import re
 import sqlite3
 import streamlit as st
 import pandas as pd
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from db import engine
 
 # ==========================================================
 #                  INITIALISATION
@@ -12,8 +16,7 @@ import pandas as pd
 st.session_state.sidebar_closed = True
 st.set_page_config(initial_sidebar_state="collapsed", layout="wide")
 
-conn = sqlite3.connect("budget.db")
-df = pd.read_sql_query("SELECT * FROM operations", conn)
+df = pd.read_sql("SELECT * FROM operations", engine)
 
 
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")

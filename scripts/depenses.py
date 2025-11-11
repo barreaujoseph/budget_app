@@ -1,7 +1,7 @@
 
 import re
 import pandas as pd
-from traitement_donnees import df  
+from scripts.traitement_donnees import df  
 
 # -----------------------------
 # LISTE DES REGEX PAR CATÉGORIE
@@ -44,15 +44,3 @@ df[["Categorie", "Mot_trouve"]] = df.apply(
 
 print(df.groupby("Categorie")["Débit euros"].sum().sort_values(ascending=False))
 
-
-import sqlite3
-
-# Connexion / création
-conn = sqlite3.connect("budget.db")
-
-# Sauvegarde du dataframe dans une table SQL
-df.to_sql("operations", conn, if_exists="replace", index=True)  # index=True = garder l'index pour modification
-
-conn.close()
-
-print("✅ Données enregistrées dans budget.db")
