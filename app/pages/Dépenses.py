@@ -1,7 +1,6 @@
 
 import streamlit as st
 import pandas as pd
-import sqlite3
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -185,12 +184,12 @@ from sqlalchemy import text
 
 st.subheader("🟡 Catégoriser les opérations non classées")
 
-df_autres = df[df["Categorie"] == "Autres"].copy()
+# ✅ Filtrer sur Autres ET non traitées
+df_autres = df[(df["Categorie"] == "Autres") & (df["Traitee"] == False)].copy()
 
 if len(df_autres) == 0:
     st.success("🎉 Aucune opération à catégoriser !")
 else:
-    # === Pagination ===
     page_size = 3
     total_pages = (len(df_autres) - 1) // page_size + 1
 
@@ -204,7 +203,6 @@ else:
 
     start = (page - 1) * page_size
     end = start + page_size
-
     df_page = df_autres.iloc[start:end]
 
     with st.form("categorisation_form"):
@@ -212,31 +210,39 @@ else:
 
         st.write(f"📄 Page {page}/{total_pages} — affichage de {len(df_page)} opérations")
 
-        for idx, row in df_page.iterrows():
+        for _, row in df_page.iterrows():
             st.write(f"👉 **{row['Libellé']}** — {row['Débit euros']} €")
 
             new_cat = st.selectbox(
                 "Choisir une catégorie",
                 ["Abonnements", "Alimentation", "Banque", "Logement", "Transports", "Loisirs", "Vêtements", "Autres"],
-                key=f"cat_{idx}"
+                key=f"cat_{row['id']}"
             )
 
-            new_cats[idx] = new_cat
+            # ✅ utiliser l'id réel venant de PostgreSQL
+            new_cats[row["id"]] = new_cat
 
             st.markdown("---")
+
 
         submit = st.form_submit_button("✅ Enregistrer les changements")
 
         if submit:
-            with engine.connect() as connection:
+            with engine.begin() as conn:
                 for idx, cat in new_cats.items():
-                    query = text("""
-                        UPDATE operations
-                        SET "Categorie" = :cat
-                        WHERE "index" = :idx
-                    """)
-                    connection.execute(query, {"cat": cat, "idx": idx})
-                connection.commit()
+                    if cat == "Autres":
+                        conn.execute(text("""
+                            UPDATE operations
+                            SET "Traitee" = TRUE
+                            WHERE id = :idx
+                        """), {"idx": idx})
+                    else:
+                        conn.execute(text("""
+                            UPDATE operations
+                            SET "Categorie" = :cat, "Traitee" = TRUE
+                            WHERE id = :idx
+                        """), {"cat": cat, "idx": idx})
 
-            st.success("✅ Catégories mises à jour dans PostgreSQL !")
+            st.success("✅ Modifications enregistrées !")
             st.rerun()
+

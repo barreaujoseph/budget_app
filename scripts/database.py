@@ -1,7 +1,21 @@
 from db import engine
 from scripts.depenses import df
+from sqlalchemy import text
 
-df.to_sql("operations", engine, if_exists="replace", index=False)
+# ✅ Assure-toi d'avoir un index propre
+df = df.reset_index(drop=True)
 
-print("✅ Données enregistrées dans la base")
+print(engine)  # Debug
 
+with engine.begin() as conn:
+    conn.execute(text("DROP TABLE IF EXISTS operations;"))
+
+df.to_sql(
+    "operations",
+    engine,
+    if_exists="replace",
+    index=True,
+    index_label="id"
+)
+
+print("✅ Table recréée + upload terminé")

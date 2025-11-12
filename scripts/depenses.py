@@ -17,30 +17,53 @@ CATEGORIES = {
 
     r"(ZARA|PRIMARK|H&M|LAFAYETTE|JULES|CELIO|BERSHKA|PULL ?& ?BEAR|UNIQLO|DECATHLON|GO SPORT|NIKE|ADIDAS|FOOT LOCKER|VETEMENTS)": "Vêtements",
 
-    r"(SNCF|RATP|METRO|INDIGO|UBER|BOLT|TAXI|AUTOLIB|TISSEO|PARKING|PEAGE|TOTAL|ESSENCE|STATION)": "Transports",
+    r"(SNCF|RATP|METRO|INDIGO|UBER|BOLT|NAVIGO|AUTOLIB|TISSEO|PARKING|PEAGE|TOTAL|ESSENCE|STATION)": "Transports",
 
     r"(AMAZON|FNAC|ZARA|PRIMARK|CULTURA|LOISIRS|CINEMA|STEAM|JEU|GAME|PAYPAL)": "Loisirs",
 }
 
+EXCLUSIONS_AUTRES = ["PHARMACIE", "ANDREA"]
+
 def classer_depense(libelle):
     if pd.isna(libelle):
-        return "Autres", None  # pas de catégorie / pas de mot détecté
+        return "Autres", None
 
-    lib = str(libelle).upper()  # Normalisation
+    lib = str(libelle).upper()
+
+    # Règle d’exclusion
+    for mot in EXCLUSIONS_AUTRES:
+        if mot in lib:
+            return "Autres", mot
 
     for pattern, categorie in CATEGORIES.items():
         match = re.search(pattern, lib)
         if match:
-            mot_trouve = match.group(0)  # ✅ extrait le mot réellement identifié
+            mot_trouve = match.group(0)
             return categorie, mot_trouve
 
     return "Autres", None
 
 
-df[["Categorie", "Mot_trouve"]] = df.apply(
-    lambda row: pd.Series(classer_depense(row["Libellé"])) if not pd.isna(row["Débit euros"]) else pd.Series([None, None]),
-    axis=1
-)
 
-print(df.groupby("Categorie")["Débit euros"].sum().sort_values(ascending=False))
+def appliquer_regex(df):
+    df = df.copy()
+    df[["Categorie", "Mot_trouve"]] = df.apply(
+        lambda row: pd.Series(classer_depense(row["Libellé"])) 
+        if not pd.isna(row.get("Débit euros")) else pd.Series([None, None]),
+        axis=1
+    )
+    return df
+
+# -----------------------------
+# Ne s'exécute que si lancé directement
+# -----------------------------
+
+if __name__ == "__main__":
+    df[["Categorie", "Mot_trouve"]] = df.apply(
+        lambda row: pd.Series(classer_depense(row["Libellé"])) 
+        if not pd.isna(row["Débit euros"]) else pd.Series([None, None]),
+        axis=1
+    )
+    print(df.groupby("Categorie")["Débit euros"].sum().sort_values(ascending=False))
+
 
