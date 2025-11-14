@@ -184,7 +184,6 @@ from sqlalchemy import text
 
 st.subheader("🟡 Catégoriser les opérations non classées")
 
-# ✅ Filtrer sur Autres ET non traitées
 df_autres = df[(df["Categorie"] == "Autres") & (df["Traitee"] == False)].copy()
 
 if len(df_autres) == 0:
@@ -192,38 +191,32 @@ if len(df_autres) == 0:
 else:
     page_size = 3
     total_pages = (len(df_autres) - 1) // page_size + 1
+    page = st.number_input("Page", 1, total_pages, 1)
 
-    page = st.number_input(
-        "Page",
-        min_value=1,
-        max_value=total_pages,
-        step=1,
-        value=1
-    )
-
-    start = (page - 1) * page_size
-    end = start + page_size
+    start, end = (page - 1) * page_size, page * page_size
     df_page = df_autres.iloc[start:end]
+
+    categories = [
+        "Abonnements", "Alimentation", "Banque", "Logement",
+        "Transports", "Loisirs", "Vêtements", "Autres"
+    ]
 
     with st.form("categorisation_form"):
         new_cats = {}
-
-        st.write(f"📄 Page {page}/{total_pages} — affichage de {len(df_page)} opérations")
+        st.write(f"📄 Page {page}/{total_pages}")
 
         for _, row in df_page.iterrows():
-            st.write(f"👉 **{row['Libellé']}** — {row['Débit euros']} €")
+            st.markdown(f"### 💳 {row['Libellé']}")
+            st.caption(f"{row['Date'].strftime('%d/%m/%Y')} — {row['Débit euros']} €")
 
-            new_cat = st.selectbox(
-                "Choisir une catégorie",
-                ["Abonnements", "Alimentation", "Banque", "Logement", "Transports", "Loisirs", "Vêtements", "Autres"],
-                key=f"cat_{row['id']}"
+            new_cat = st.radio(
+                "Choisir une catégorie :",
+                categories,
+                key=f"cat_{row['id']}",
+                horizontal=True,
             )
-
-            # ✅ utiliser l'id réel venant de PostgreSQL
             new_cats[row["id"]] = new_cat
-
-            st.markdown("---")
-
+            st.divider()
 
         submit = st.form_submit_button("✅ Enregistrer les changements")
 

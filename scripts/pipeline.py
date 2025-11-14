@@ -1,5 +1,5 @@
 from scripts.A_traitement_donnees import traiter_fichier_bancaire
-from scripts.B_depenses import appliquer_regex
+from scripts.B_depenses import classifier_operations
 import pandas as pd
 import re
 import pandas as pd
@@ -23,4 +23,6 @@ df_remote = pd.read_sql("SELECT * FROM operations;", engine)
 print(f"✅ Données récupérées : {len(df_remote)} lignes")
 
 # 2. Retraiter fichier bancaire
-df_nouveau = traiter_fichier_bancaire("CA20251114_091415.xlsx")
+df_nouveau = classifier_operations("CA20251114_091415.xlsx")
+
+# 3. Appliquer regex
