@@ -117,34 +117,10 @@ def appliquer_fuzzy(df: pd.DataFrame, seuil: int = 90) -> pd.DataFrame:
         df.loc[mask, "Traitee"] = True
 
     return df
-
-# -----------------------------
-# 3️⃣ Pipeline complet
-# -----------------------------
-def classifier_operations(df: pd.DataFrame) -> pd.DataFrame:
-    """Combine la classification par REGEX et par similarité fuzzy."""
-    df = appliquer_regex(df)
-    df = appliquer_fuzzy(df)
-    print("\n📊 Répartition finale des catégories :")
-    print(df["Categorie"].value_counts(normalize=True).mul(100).round(1).astype(str) + " %")
-
-    # 🟠 Bloc supplémentaire — lister les "Autres"
-    autres_df = df[(df["Categorie"] == "Autres") & (df['EstTraitee'] == False)].copy()
-    nb_autres = len(autres_df)
-    pct_autres = round(nb_autres / len(df) * 100, 1)
-
-    print(f"\n🟠 Il reste {nb_autres} opérations non traitées dans 'Autres' ({pct_autres}% du total).")
-
-    if nb_autres > 0:
-        print("\n📋 Libellés les plus fréquents parmi 'Autres' :")
-        freq = autres_df["Libellé"].value_counts().head(30)
-        for lib, n in freq.items():
-            print(f"   - {lib} ({n}x)")
-
-    return df
-
+ 
 
 # -----------------------------
 # 🧪 Exécution
 # -----------------------------
-df_result = classifier_operations(df_nouveau)
+#df_result = appliquer_regex(df_nouveau)
+#df_result = appliquer_fuzzy(df_nouveau)

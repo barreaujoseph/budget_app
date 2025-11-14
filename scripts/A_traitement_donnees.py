@@ -131,4 +131,4 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
 # Exemple d'utilisation
 
-df_nouveau = traiter_fichier_bancaire("CA20251114_091415.xlsx")
+df_nouveau = traiter_fichier_bancaire("/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx")
