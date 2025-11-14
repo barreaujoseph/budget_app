@@ -2,6 +2,7 @@ import pandas as pd
 import re
 from openpyxl import load_workbook
 
+
 def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
     """
     Traite un fichier bancaire Excel brut (Crédit Agricole, etc.)
@@ -10,16 +11,9 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
       - le solde final associé
       - le compte détecté
       - un calcul de solde courant
-
-    Paramètres
-    ----------
-    fichier : str
-        Nom du fichier Excel brut (ex: 'CA20251111_105004.xlsx')
-
-    Retour
-    ------
-    pd.DataFrame : tableau nettoyé et enrichi
     """
+
+    pd.set_option('future.no_silent_downcasting', True)
 
     print(f"📂 Lecture du fichier : {fichier}")
     raw = pd.read_excel(fichier, header=None, engine="openpyxl")
@@ -33,8 +27,18 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
         match = re.search(r"Solde au\s+(\d{2}/\d{2}/\d{4})\s+([\d\s,]+)", row_str)
         if match:
             date_solde = pd.to_datetime(match.group(1), dayfirst=True)
-            montant = match.group(2).replace("\xa0", "").replace("\u202f", "").replace(" ", "").replace(",", ".")
-            soldes.append({"ligne_solde": i, "date_solde": date_solde, "solde": float(montant)})
+            montant = (
+                match.group(2)
+                .replace("\xa0", "")
+                .replace("\u202f", "")
+                .replace(" ", "")
+                .replace(",", ".")
+            )
+            soldes.append({
+                "ligne_solde": i,
+                "date_solde": date_solde,
+                "solde": float(montant)
+            })
 
     print(f"✅ {len(soldes)} soldes détectés")
     for s in soldes:
@@ -56,12 +60,18 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
         df_tmp = df_tmp[pd.to_datetime(df_tmp["Date"], errors="coerce").notna()].copy()
         df_tmp["Date"] = pd.to_datetime(df_tmp["Date"])
 
-        # Associer le solde correspondant
+        # Trouver le solde au-dessus de ce bloc
         solde_associe = None
         for s in sorted(soldes, key=lambda x: x["ligne_solde"], reverse=True):
             if s["ligne_solde"] < start:
                 solde_associe = s
                 break
+
+        # Si aucune opération trouvée après le solde → ignorer ce compte
+        if df_tmp.empty:
+            if solde_associe:
+                print(f"⚠️ Aucun mouvement trouvé après le solde du {solde_associe['date_solde'].strftime('%d/%m/%Y')} — compte ignoré.")
+            continue
 
         if solde_associe:
             df_tmp["Solde final"] = solde_associe["solde"]
@@ -70,34 +80,45 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
         dataframes.append(df_tmp)
 
     if not dataframes:
-        raise ValueError("❌ Aucune section d'opérations détectée.")
+        raise ValueError("❌ Aucun tableau d'opérations valide détecté.")
 
     # =====================================================
-    # 3️⃣ Fusion, calculs et nettoyage
+    # 3️⃣ Fusion, nettoyage et calculs
     # =====================================================
     df = pd.concat(dataframes, ignore_index=True)
 
-    # Conversion des montants
+    # Conversion sécurisée des montants
     for col in ["Débit euros", "Crédit euros"]:
-        df[col] = df[col].replace({",": ".", " ": ""}, regex=True)
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+        if col in df.columns:
+            df[col] = df[col].astype(str).replace({",": ".", " ": ""}, regex=True)
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    # Compte unique par solde final
-    df["Compte"] = df.groupby(["Solde final", "Date solde final"]).ngroup() + 1
+    # Ajouter un ID de compte unique
+    df["Compte"] = df.groupby(["Solde final", "Date solde final"], dropna=False).ngroup() + 1
 
     # Montant net : crédit - débit
     df["Montant"] = df["Crédit euros"] - df["Débit euros"]
 
-    # Tri
+    # Tri chronologique
     df = df.sort_values(["Compte", "Date"]).reset_index(drop=True)
 
-    # Solde courant : calcul rétroactif à partir du solde final
-    df["Solde courant"] = (
-        df.groupby("Compte", group_keys=False)
-        .apply(lambda g: g["Solde final"].iloc[0] - g["Montant"][::-1].cumsum()[::-1])
-    )
+    # ✅ Calcul du solde courant seulement si Solde final est présent
+    if "Solde final" in df.columns and df["Solde final"].notna().any():
+        df["Solde courant"] = (
+            df["Solde final"]
+            - df.groupby("Compte")["Montant"]
+              .transform(lambda x: x.iloc[::-1].cumsum().iloc[::-1])
+        )
+    else:
+        print("⚠️ Aucun solde final valide, solde courant non calculé.")
+        df["Solde courant"] = pd.NA
 
-    print("✅ Données bancaires traitées avec succès.")
-    print(f"   → {len(df)} opérations consolidées sur {df['Compte'].nunique()} comptes détectés")
+    print(f"✅ Données bancaires traitées avec succès : {len(df)} opérations sur {df['Compte'].nunique()} compte(s).")
 
     return df
+
+
+
+# Exemple d'utilisation
+
+df_nouveau = traiter_fichier_bancaire("CA20251114_091415.xlsx")

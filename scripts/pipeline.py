@@ -1,4 +1,3 @@
-
 from scripts.A_traitement_donnees import traiter_fichier_bancaire
 from scripts.B_depenses import appliquer_regex
 import pandas as pd
@@ -22,3 +21,6 @@ from db import engine  # Ton objet engine PostgreSQL (depuis db.py)
 print("📡 Connexion à la base Railway...")
 df_remote = pd.read_sql("SELECT * FROM operations;", engine)
 print(f"✅ Données récupérées : {len(df_remote)} lignes")
+
+# 2. Retraiter fichier bancaire
+df_nouveau = traiter_fichier_bancaire("CA20251114_091415.xlsx")

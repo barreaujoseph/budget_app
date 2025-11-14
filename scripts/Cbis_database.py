@@ -1,6 +1,10 @@
 from db import engine
-from scripts.depenses import df
+from scripts.B_depenses import df
 from sqlalchemy import text
+
+# -----------------------------
+# Ancien script qui envoyait vers sqlite
+# -----------------------------
 
 # ✅ Assure-toi d'avoir un index propre
 df = df.reset_index(drop=True)

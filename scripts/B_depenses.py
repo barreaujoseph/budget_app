@@ -1,13 +1,10 @@
 
 import re
 import pandas as pd
-from scripts.1_traitement_donnees import df  
 
 # -----------------------------
-# Script qui gère la classification REGEX
+# Fonction qui gère la classification REGEX
 # -----------------------------
-
-
 # -----------------------------
 # LISTE DES REGEX PAR CATÉGORIE
 # -----------------------------
@@ -70,23 +67,4 @@ def appliquer_regex(df):
         axis=1
     )
     return df
-
-# -----------------------------
-# Ne s'exécute que si lancé directement
-# -----------------------------
-
-if __name__ == "__main__":
-    # Appliquer ta fonction de classification à chaque ligne
-    df[["Categorie", "Mot_trouve"]] = df.apply(
-        lambda row: pd.Series(classer_depense(row["Libellé"])) 
-        if not pd.isna(row["Débit euros"]) else pd.Series([None, None]),
-        axis=1
-    )
-
-autres_count = (df["Categorie"] == "Autres").sum()
-total = len(df)
-print(f"🔸 {autres_count} opérations dans 'Autres' ({autres_count/total*100:.1f}% du total)")
-
-print(df['Categorie'].value_counts(normalize=True))
- 
 

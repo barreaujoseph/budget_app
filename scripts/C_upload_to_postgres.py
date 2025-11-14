@@ -1,5 +1,4 @@
 from db import engine
-from scripts.depenses import df
 from sqlalchemy import text
 
 # -----------------------------

@@ -13,7 +13,7 @@ import pandas as pd
 from rapidfuzz import process, fuzz
 from sqlalchemy import text
 from db import engine  # Ton objet engine PostgreSQL (depuis db.py)
-from scripts.depenses import appliquer_regex  # ⚙️ ta moulinette regex
+from scripts.B_depenses import appliquer_regex  # ⚙️ ta moulinette regex
 
 # ======================================================
 # 1️⃣ Récupération de la base PostgreSQL
@@ -75,8 +75,7 @@ for _, row in df_suggestions.iterrows():
 
 # Mettre à jour le statut "Traitee"
 df.loc[df['Categorie'] != 'Autres', 'Traitee'] = True
-
-print("🎯 Catégories fuzzy mises à jour et lignes correspondantes marquées comme traitées.")
+ 
 
 # ======================================================
 # 3️⃣ Passage de la moulinette regex (scripts.depenses)
