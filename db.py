@@ -1,6 +1,10 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+
+# -----------------------------
+# Mise en place de la connexion à la base de données PostgreSQL
+# -----------------------------
 
 load_dotenv()  # Charge .env en local
 
@@ -10,3 +14,4 @@ if DATABASE_URL is None:
 
 
 engine = create_engine(DATABASE_URL)
+

@@ -2,6 +2,10 @@ from db import engine
 from scripts.depenses import df
 from sqlalchemy import text
 
+# -----------------------------
+# Script qui envoie les données vers PostgreSQL
+# -----------------------------
+
 print("🔄 Envoi des données vers PostgreSQL...")
 print("Connexion utilisée :", engine)
 
@@ -24,7 +28,7 @@ df.to_sql(
 # ✅ Ajouter la colonne Traitee si elle n'existe pas déjà
 with engine.begin() as conn:
     conn.execute(text("""
-        ALTER TABLE operations
+        ALTER TABLE operations_old
         ADD COLUMN IF NOT EXISTS "Traitee" BOOLEAN DEFAULT FALSE;
     """))
 
