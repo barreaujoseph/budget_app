@@ -39,7 +39,7 @@ EXCLUSIONS_AUTRES = ["PHARMACIE", "ANDREA"]
 # 1️⃣ Fonction de classification par REGEX
 # -----------------------------
 def classer_depense(libelle):
-    """Retourne (Categorie, Mot_trouvé, EstTraitee)"""
+    """Retourne (Categorie, Mot_trouvé, Traitee)"""
     if pd.isna(libelle):
         return "Autres", None, False
 
@@ -69,6 +69,7 @@ def appliquer_regex(df: pd.DataFrame) -> pd.DataFrame:
         else pd.Series(["Autres", None, False]),
         axis=1,
     )
+    print("✅ Classification REGEX appliquée.")
     return df
 
 

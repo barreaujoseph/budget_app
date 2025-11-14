@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 from openpyxl import load_workbook
-
+import os
 
 def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
     """
@@ -15,8 +15,18 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
     pd.set_option('future.no_silent_downcasting', True)
 
-    print(f"📂 Lecture du fichier : {fichier}")
-    raw = pd.read_excel(fichier, header=None, engine="openpyxl")
+        # ✅ Détermination du répertoire de base
+    try:
+        base_dir = os.path.dirname(__file__)
+    except NameError:
+        base_dir = os.getcwd()  # cas notebook / Streamlit
+    fichier_path = os.path.join(base_dir, fichier)
+
+    if not os.path.exists(fichier_path):
+        raise FileNotFoundError(f"❌ Fichier introuvable : {fichier_path}")
+
+    print(f"📂 Lecture du fichier : {fichier_path}")
+    raw = pd.read_excel(fichier_path, header=None, engine="openpyxl")
 
     # =====================================================
     # 1️⃣ Détection des lignes "Solde au ..."
