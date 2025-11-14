@@ -114,14 +114,24 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
     # ✅ Calcul du solde courant seulement si Solde final est présent
     if "Solde final" in df.columns and df["Solde final"].notna().any():
-        df["Solde courant"] = (
-            df["Solde final"]
-            - df.groupby("Compte")["Montant"]
-              .transform(lambda x: x.iloc[::-1].cumsum().iloc[::-1])
-        )
+        print("🧮 Calcul du solde courant...")
+
+        # Liste pour stocker les soldes calculés par compte
+        solde_courant_list = []
+
+        for compte, g in df.groupby("Compte", sort=False):
+            solde_final = g["Solde final"].iloc[0]
+            # cumul inverse des montants pour reconstruire le solde
+            solde_courant = solde_final - g["Montant"].iloc[::-1].cumsum().iloc[::-1]
+            solde_courant_list.append(solde_courant)
+
+        # Fusion des résultats dans le bon ordre
+        df["Solde courant"] = pd.concat(solde_courant_list).sort_index()
+
     else:
         print("⚠️ Aucun solde final valide, solde courant non calculé.")
         df["Solde courant"] = pd.NA
+
 
     print(f"✅ Données bancaires traitées avec succès : {len(df)} opérations sur {df['Compte'].nunique()} compte(s).")
 
@@ -131,4 +141,4 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
 # Exemple d'utilisation
 
-df_nouveau = traiter_fichier_bancaire("/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx")
+#df_nouveau = traiter_fichier_bancaire("/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx")

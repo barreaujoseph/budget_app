@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 from rapidfuzz import process, fuzz
-from scripts.A_traitement_donnees import df_nouveau
+
 
 # -----------------------------
 # LISTE DES REGEX PAR CATÉGORIE

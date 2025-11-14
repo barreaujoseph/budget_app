@@ -64,3 +64,5 @@ print(f"🧹 Après nettoyage : {len(df_concat)} lignes uniques au total.")
 test = appliquer_fuzzy(df_concat)
 
 print(df_nouveau['Traitee'].value_counts())
+
+ 
