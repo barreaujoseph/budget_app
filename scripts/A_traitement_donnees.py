@@ -3,6 +3,7 @@ import re
 from openpyxl import load_workbook
 import os
 
+
 def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
     """
     Traite un fichier bancaire Excel brut (Crédit Agricole, etc.)
@@ -15,17 +16,21 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
     pd.set_option('future.no_silent_downcasting', True)
 
-        # ✅ Détermination du répertoire de base
-    try:
-        base_dir = os.path.dirname(__file__)
-    except NameError:
-        base_dir = os.getcwd()  # cas notebook / Streamlit
-    fichier_path = os.path.join(base_dir, fichier)
+    # ✅ Détermination du chemin du fichier
+    if os.path.isabs(fichier):
+        fichier_path = fichier
+    else:
+        try:
+            base_dir = os.path.dirname(__file__)
+        except NameError:
+            base_dir = os.getcwd()  # cas notebook / REPL / Streamlit
+        fichier_path = os.path.join(base_dir, fichier)
 
     if not os.path.exists(fichier_path):
         raise FileNotFoundError(f"❌ Fichier introuvable : {fichier_path}")
 
     print(f"📂 Lecture du fichier : {fichier_path}")
+
     raw = pd.read_excel(fichier_path, header=None, engine="openpyxl")
 
     # =====================================================
@@ -116,22 +121,16 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
     if "Solde final" in df.columns and df["Solde final"].notna().any():
         print("🧮 Calcul du solde courant...")
 
-        # Liste pour stocker les soldes calculés par compte
-        solde_courant_list = []
+        df["Solde courant"] = pd.NA  # initialise la colonne
 
         for compte, g in df.groupby("Compte", sort=False):
             solde_final = g["Solde final"].iloc[0]
-            # cumul inverse des montants pour reconstruire le solde
             solde_courant = solde_final - g["Montant"].iloc[::-1].cumsum().iloc[::-1]
-            solde_courant_list.append(solde_courant)
-
-        # Fusion des résultats dans le bon ordre
-        df["Solde courant"] = pd.concat(solde_courant_list).sort_index()
+            df.loc[g.index, "Solde courant"] = solde_courant
 
     else:
         print("⚠️ Aucun solde final valide, solde courant non calculé.")
         df["Solde courant"] = pd.NA
-
 
     print(f"✅ Données bancaires traitées avec succès : {len(df)} opérations sur {df['Compte'].nunique()} compte(s).")
 
@@ -139,6 +138,8 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
 
 
+
 # Exemple d'utilisation
 
-#df_nouveau = traiter_fichier_bancaire("/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx")
+df_nouveau = traiter_fichier_bancaire("/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx")
+ 

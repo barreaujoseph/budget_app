@@ -184,7 +184,12 @@ from sqlalchemy import text
 
 st.subheader("🟡 Catégoriser les opérations non classées")
 
-df_autres = df[(df["Categorie"] == "Autres") & (df["Traitee"] == False)].copy()
+df_autres = df[
+    (df["Categorie"] == "Autres")
+    & (df["Traitee"] == False)
+    & (df["Débit euros"].notna())
+].copy()
+
 
 if len(df_autres) == 0:
     st.success("🎉 Aucune opération à catégoriser !")
