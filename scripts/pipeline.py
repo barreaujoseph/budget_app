@@ -14,10 +14,10 @@ print(f"Données existantes : {len(df_remote)} lignes")
 # ======================================================
 # 2. Traitement du nouveau fichier bancaire
 # ======================================================
-fichier_excel = "/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251114_091415.xlsx"
+fichier_excel = "/Users/josephbarreau/Documents/python/expenses_tracker/V2/CA20251229_102636.xlsx"
 df_nouveau = traiter_fichier_bancaire(fichier_excel)
 df_nouveau = appliquer_regex(df_nouveau)
-df_remote = appliquer_regex(df_remote)
+#df_remote = appliquer_regex(df_remote)
 
 # ======================================================
 # 3. Harmonisation des colonnes
@@ -52,6 +52,7 @@ else:
     print("Aucun doublon détecté sur la date la plus récente")
 
 print(f"Nettoyage terminé : {len(df_concat)} lignes uniques")
+
 
 # ======================================================
 # 6. Classification fuzzy

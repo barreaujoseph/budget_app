@@ -116,6 +116,9 @@ def appliquer_fuzzy(df: pd.DataFrame, seuil: int = 90) -> pd.DataFrame:
         df.loc[mask, "Categorie"] = row["Categorie"]
         df.loc[mask, "Traitee"] = True
 
+    restantes = df[(df["Categorie"] == "Autres") & (df["Traitee"] != True) & (df["Débit euros"].notna())]
+    print(f"📌 {len(restantes)} opérations restantes à catégoriser")
+
     return df
  
 

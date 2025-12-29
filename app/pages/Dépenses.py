@@ -22,17 +22,12 @@ st.title("📊 Suivi de budget")
 import altair as alt
 import pandas as pd
 
+
 # ========================================
-# 🔥 FILTRE DE PERIODE (affecte les 2 graphes)
+# 🔥 FILTRE DE PERIODE FIXE : 6 DERNIERS MOIS
 # ========================================
 
-st.subheader("📊 Analyse des dépenses")
-
-periode = st.selectbox(
-    "Filtrer sur la période :",
-    options=["3 derniers mois", "6 derniers mois", "12 derniers mois", "Tout"],
-    index=1  # Défaut = 6 derniers mois
-)
+st.subheader("📊 Analyse des dépenses (6 derniers mois)")
 
 # Convertir la date
 df["Date"] = pd.to_datetime(df["Date"])
@@ -41,16 +36,9 @@ df["Mois"] = df["Date"].dt.to_period("M")
 # Dépenses uniquement
 df_dep = df[df["Débit euros"].notna()].copy()
 
-# Appliquer le filtre de période
+# Appliquer le filtre : 6 derniers mois
 dernier_mois = df_dep["Mois"].max()
-
-if periode == "3 derniers mois":
-    df_dep = df_dep[df_dep["Mois"] >= dernier_mois - 2]
-elif periode == "6 derniers mois":
-    df_dep = df_dep[df_dep["Mois"] >= dernier_mois - 5]
-elif periode == "12 derniers mois":
-    df_dep = df_dep[df_dep["Mois"] >= dernier_mois - 11]
-# sinon "Tout" → pas de filtre
+df_dep = df_dep[df_dep["Mois"] >= dernier_mois - 5]
 
 
 # ========================================
@@ -124,6 +112,78 @@ with col2:
     )
 
     st.altair_chart(chart_pie, use_container_width=True)
+
+# ========================================
+# 📊 COMPARAISON MOIS COURANT VS MOYENNE 6 MOIS
+# ========================================
+
+mois_courant = df_dep["Mois"].max()
+
+# Dépenses du mois courant
+df_current = (
+    df_dep[df_dep["Mois"] == mois_courant]
+    .groupby("Categorie")["Débit euros"]
+    .sum()
+    .reset_index()
+    .rename(columns={"Débit euros": "Montant"})
+)
+
+# Moyenne mensuelle sur 6 mois
+df_avg = (
+    df_dep.groupby(["Mois", "Categorie"])["Débit euros"]
+    .sum()
+    .reset_index()
+    .groupby("Categorie")["Débit euros"]
+    .mean()
+    .reset_index()
+    .rename(columns={"Débit euros": "Montant"})
+)
+
+# Ajouter un label pour le graphique
+df_current["Type"] = "Mois courant"
+df_avg["Type"] = "Moyenne 6 mois"
+
+# Combiner
+# Pivot to compute deviation
+
+df_compare = pd.concat([df_current, df_avg], ignore_index=True)
+
+
+df_pivot = (
+    df_compare
+    .pivot(index="Categorie", columns="Type", values="Montant")
+    .fillna(0)
+    .reset_index()
+)
+
+df_pivot["Écart (€)"] = df_pivot["Mois courant"] - df_pivot["Moyenne 6 mois"]
+
+
+
+st.subheader("📊 Écart des dépenses par rapport à la moyenne (mois courant)")
+
+chart_dev = (
+    alt.Chart(df_pivot)
+    .mark_bar()
+    .encode(
+        x=alt.X("Categorie:N", sort="-y", title="Catégorie"),
+        y=alt.Y("Écart (€):Q", title="Écart (€)"),
+        color=alt.condition(
+            alt.datum["Écart (€)"] > 0,
+            alt.value("#d62728"),  # red = overspend
+            alt.value("#2ca02c"),  # green = underspend
+        ),
+        tooltip=[
+            alt.Tooltip("Categorie:N", title="Catégorie"),
+            alt.Tooltip("Écart (€):Q", title="Écart (€)", format=",.0f"),
+        ],
+    )
+    .properties(height=400)
+)
+
+st.altair_chart(chart_dev, use_container_width=True)
+
+
 
 
 # Filtre catégories pour ce tableau
