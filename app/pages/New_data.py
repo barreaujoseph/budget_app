@@ -1,15 +1,20 @@
 import streamlit as st
 import pandas as pd
 import os
-from sqlalchemy import text
-from db import engine
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# --- CONFIGURATION DU CHEMIN (DOIT ÊTRE AVANT LES AUTRES IMPORTS) ---
+# On récupère le chemin du dossier parent (app/)
+current_dir = os.path.dirname(os.path.abspath(__file__)) # dossier 'pages'
+parent_dir = os.path.dirname(current_dir)                # dossier 'app'
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
-# Imports de tes scripts de logique
+# --- MAINTENANT VOUS POUVEZ IMPORTER VOS MODULES ---
+from db import engine
 from scripts.A_traitement_donnees import traiter_fichier_bancaire
 from scripts.B_depenses import appliquer_regex, appliquer_fuzzy
+from sqlalchemy import text
 
 st.title("📥 Ajouter de nouvelles données")
 
