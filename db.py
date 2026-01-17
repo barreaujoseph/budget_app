@@ -1,17 +1,17 @@
 import os
-from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
-# -----------------------------
-# Mise en place de la connexion à la base de données PostgreSQL
-# -----------------------------
+load_dotenv()
 
-load_dotenv()  # Charge .env en local
+# On cherche d'abord la nouvelle variable, sinon l'ancienne
+db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL is None:
-    raise Exception("❌ DATABASE_URL non détecté — vérifie Railway Variables")
+if db_url is None:
+    raise Exception("❌ Aucune URL de base de données détectée")
 
+# Si l'URL contient "internal", on affiche un avertissement car ça va planter hors de Railway
+if "internal" in db_url:
+    print("⚠️ Attention : Utilisation d'une adresse interne Railway.")
 
-engine = create_engine(DATABASE_URL)
-
+engine = create_engine(db_url)
