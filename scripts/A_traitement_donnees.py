@@ -16,15 +16,17 @@ def traiter_fichier_bancaire(fichier: str) -> pd.DataFrame:
 
     pd.set_option('future.no_silent_downcasting', True)
 
-    # ✅ Détermination du chemin du fichier
-    if os.path.isabs(fichier):
+    # ✅ Détermination du chemin du fichier (Version compatible Streamlit)
+    if os.path.exists(fichier):
+        # Si le chemin fourni existe tel quel (chemin absolu ou relatif à la racine)
         fichier_path = fichier
     else:
+        # Sinon, on tente de chercher par rapport au dossier du script
         try:
             base_dir = os.path.dirname(__file__)
+            fichier_path = os.path.join(base_dir, fichier)
         except NameError:
-            base_dir = os.getcwd()  # cas notebook / REPL / Streamlit
-        fichier_path = os.path.join(base_dir, fichier)
+            fichier_path = fichier
 
     if not os.path.exists(fichier_path):
         raise FileNotFoundError(f"❌ Fichier introuvable : {fichier_path}")
