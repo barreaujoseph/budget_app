@@ -3,14 +3,16 @@ import pandas as pd
 import os
 import sys
 
-# --- CONFIGURATION DU CHEMIN (DOIT ÊTRE AVANT LES AUTRES IMPORTS) ---
-# On récupère le chemin du dossier parent (app/)
-current_dir = os.path.dirname(os.path.abspath(__file__)) # dossier 'pages'
-parent_dir = os.path.dirname(current_dir)                # dossier 'app'
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+# --- CONFIGURATION DU CHEMIN ---
+# 1. Chemin du fichier actuel (app/pages/New_data.py)
+# 2. .parent -> app/
+# 3. .parent.parent -> racine_du_projet/
+root_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# --- MAINTENANT VOUS POUVEZ IMPORTER VOS MODULES ---
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
+# --- MAINTENANT LES IMPORTS FONCTIONNERONT ---
 from db import engine
 from scripts.A_traitement_donnees import traiter_fichier_bancaire
 from scripts.B_depenses import appliquer_regex, appliquer_fuzzy
