@@ -154,117 +154,59 @@ st.write("")
 st.write("")
 
 # ==========================================================
-#                  PROJECTION EPARGNE (24/36/60 mois)
+#                  VIREMENTS REÇUS (ANDREA)
 # ==========================================================
 
+st.subheader("📩 Virements reçus — ANDREA")
 
-st.subheader("🔮 Projection d'épargne (comparatif 2 ans / 3 ans / 5 ans)")
+# 1. Filtrage des opérations contenant "ANDREA" dans le libellé
+# On utilise la colonne Libellé_upper créée plus haut pour ignorer la casse
+df_andrea = df[df["Libellé_upper"].str.contains("ANDREA", na=False)].copy()
 
-st.write("")
-st.write("")
+if not df_andrea.empty:
+    # On ne garde que les colonnes pertinentes et on trie par date
+    df_display = df_andrea[["Date", "Libellé", "Crédit euros"]].sort_values("Date", ascending=False)
+    
+    # Calcul du total reçu
+    total_andrea = df_display["Crédit euros"].sum()
 
-# --- Paramètres utilisateur ---
-col1, col2, col3 = st.columns(3)
-
-salaire_simule = col1.slider(
-    "Salaire mensuel pris en compte (€)",
-    min_value=int(salaire_moyen_par_mois - 100),
-    max_value=int(salaire_moyen_par_mois + 100),
-    value=int(salaire_moyen_par_mois),
-    step=50
-)
-
-taux_epargne_simule = col2.slider(
-    "Taux d’épargne (%)",
-    min_value=0.0,
-    max_value=50.0,
-    value=round((epargne_moyenne / salaire_moyen_par_mois) * 100, 1),
-    step=1.0
-)
-
-taux_interet = col3.slider(
-    "Taux d'intérêt (annuel, %)",
-    min_value=0.0,
-    max_value=5.0,
-    value=1.5,
-    step=0.5
-)
-
-# --- Calcul projection ---
-import numpy as np
-import pandas as pd
-
-interet_mensuel = taux_interet / 12 / 100
-epargne_mensuelle = salaire_simule * (taux_epargne_simule / 100)
-
-def projection(mois):
-    solde = 0
-    for _ in range(mois):
-        solde += epargne_mensuelle
-        solde *= (1 + interet_mensuel)
-    return solde
-
-df_projection = pd.DataFrame({
-    "Durée": ["2 ans (24 mois)", "3 ans (36 mois)", "5 ans (60 mois)"],
-    "Solde projeté": [
-        projection(24),
-        projection(36),
-        projection(60),
-    ]
-})
-
-st.write("")
-st.write("")
-# --- Barplot ---
-import altair as alt
-
-# Formatage pour affichage des labels
-df_projection["Label"] = df_projection["Solde projeté"].apply(
-    lambda v: f"{v:,.0f} €".replace(",", " ")
-)
-
-chart = (
-    alt.Chart(df_projection)
-    .mark_bar(
-        cornerRadiusTopLeft=12,
-        cornerRadiusTopRight=12
+    # Affichage d'un indicateur visuel
+    col1, col2 = st.columns([1, 3])
+    col1.metric("Total reçu", format_euro(total_andrea))
+    
+    # Affichage du tableau stylisé
+    st.dataframe(
+        df_display,
+        column_config={
+            "Date": st.column_config.DateColumn("Date", format="DD/MM/YYYY"),
+            "Libellé": "Détail du virement",
+            "Crédit euros": st.column_config.NumberColumn("Montant", format="%.2f €")
+        },
+        hide_index=True,
+        use_container_width=True
     )
-    .encode(
-        x=alt.X("Durée:N", title=None, axis=alt.Axis(labelFontSize=14)),
-        y=alt.Y("Solde projeté:Q", title="Épargne totale (€)", axis=alt.Axis(labelFontSize=14)),
-        tooltip=[
-            alt.Tooltip("Durée:N", title="Durée"),
-            alt.Tooltip("Solde projeté:Q", title="Montant (€)", format=",.0f")
-        ],
-        color=alt.Color(
-            "Durée:N",
-            scale=alt.Scale(
-                # Gradient personnalisé, plus premium
-                range=["#7BC6FF", "#0096FF", "#005CFF"]
-            ),
-            legend=None
+    
+    # Petit graphique d'évolution des virements reçus
+    st.write("📈 Historique des réceptions")
+    chart_andrea = (
+        alt.Chart(df_display)
+        .mark_area(
+            line={'color':'#0096FF'},
+            color=alt.Gradient(
+                gradient='linear',
+                stops=[alt.GradientStop(color='white', offset=0),
+                       alt.GradientStop(color='#0096FF', offset=1)],
+                x1=1, x2=1, y1=1, y2=0
+            )
         )
+        .encode(
+            x='Date:T',
+            y=alt.Y('Crédit euros:Q', title="Montant (€)"),
+            tooltip=['Date', 'Libellé', 'Crédit euros']
+        )
+        .properties(height=250)
     )
-    .properties(
-        height=420
-    )
-)
+    st.altair_chart(chart_andrea, use_container_width=True)
 
-# ✅ Ajouter les labels au-dessus des barres
-text_labels = (
-    alt.Chart(df_projection)
-    .mark_text(
-        dy=-10,  # position par rapport à la barre
-        fontSize=16,
-        fontWeight="bold",
-        color="#1a1a1a"
-    )
-    .encode(
-        x="Durée:N",
-        y="Solde projeté:Q",
-        text="Label:N",
-    )
-)
-
-# Affichage dans Streamlit
-st.altair_chart(chart + text_labels, use_container_width=True)
+else:
+    st.info("Aucun virement contenant 'ANDREA' n'a été détecté dans l'historique.")
